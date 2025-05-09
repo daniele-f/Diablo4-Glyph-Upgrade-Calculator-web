@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Diablo 4 Glyph Upgrade Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: auto;
+            padding: 20px;
+            background-color: #171818;
+            color: tan;
+            border-radius: 10px;
+        }
+        h1, h2, h3 {
+            font-size: 1.5em;
+            text-align: center;
+        }
+        label {
+            display: block;
+            margin: 15px 0;
+        }
+        input[type="number"] {
+            width: 25%;
+            padding: 8px;
+            font-size: 1em;
+            background-color: rgb(35, 36, 36);
+            color: #E0D5C2;
+            border: 1px solid #444;
+            border-radius: 5px;
+        }
+        .buttons, .range-buttons {
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        button {
+            flex: 1;
+            margin: 2px;
+            padding: 6px 8px;
+            font-size: 0.9em;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            color: #E0D5C2;
+            background-color: #8F410A;
+        }
+		.reset-button {
+			background-color: #661e0d;
+		}
+        #applyFinalLevel {
+            background-color: #552e1b;
+            margin-top: 10px;
+        }
+        .box {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #111112;
+            border-radius: 10px;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #2c2c2c;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="box">
+        <h2>Minimum Pit Level Calculator</h2>
+        <label for="glyphLevel">Glyph Level:</label>
+        <input type="number" id="glyphLevel" min="1" value="1">
+
+        <div class="buttons">
+            <button onclick="adjustGlyphLevel(1)">+1</button>
+            <button onclick="adjustGlyphLevel(-1)">-1</button>
+            <button class="reset-button" onclick="resetGlyphLevel()">Reset</button>
+        </div>
+
+        <label>
+            <input type="checkbox" id="noDeathBonus">
+            No-death bonus
+        </label>
+
+        <label>
+            <input type="checkbox" id="calcPlus20">
+            +20 Pit level
+        </label>
+
+        <button id="applyFinalLevel">Apply Final Glyph Level</button>
+
+        <div class="result" id="output">
+            Enter a glyph level to see results.
+        </div>
+    </div>
+
+    <div class="box">
+        <h2>Artificer's Stone Cost Calculator</h2>
+        <label for="currentLevel">Current Glyph Level:</label>
+        <input type="number" id="currentLevel" min="1" value="1">
+
+        <label for="desiredLevel">Desired Glyph Level:</label>
+        <input type="number" id="desiredLevel" min="1" value="15">
+
+        <div class="range-buttons">
+            <button onclick="setRange(1, 15)">1 → 15</button>
+            <button onclick="setRange(15, 46)">15 → 46</button>
+            <button onclick="setRange(46, 100)">46 → 100</button>
+        </div>
+
+        <label>
+            <input type="checkbox" id="stoneNoDeath">
+            No-death bonus
+        </label>
+
+        <label>
+            <input type="checkbox" id="pitPlus20">
+            +20 Pit level
+        </label>
+
+        <div class="result" id="stoneOutput">
+            Enter your levels to calculate Artificer's Stone cost.
+        </div>
+    </div>
+
+    <script>
+        const glyphInput = document.getElementById('glyphLevel');
+        const noDeathBonus = document.getElementById('noDeathBonus');
+        const calcPlus20 = document.getElementById('calcPlus20');
+        const output = document.getElementById('output');
+        const applyFinalLevel = document.getElementById('applyFinalLevel');
+
+        const currentLevel = document.getElementById('currentLevel');
+        const desiredLevel = document.getElementById('desiredLevel');
+        const stoneNoDeath = document.getElementById('stoneNoDeath');
+        const pitPlus20 = document.getElementById('pitPlus20');
+        const stoneOutput = document.getElementById('stoneOutput');
+
+        let lastFinalGlyphLevel = 1;
+
+        function updateResults() {
+            const glyphLevel = parseInt(glyphInput.value);
+            const attempts = noDeathBonus.checked ? 4 : 3;
+            const extraUpgrade = calcPlus20.checked ? 1 : 0;
+
+            if (isNaN(glyphLevel) || glyphLevel < 1) {
+                output.innerText = 'Please enter a valid glyph level (1 or higher).';
+                return;
+            }
+
+            const finalGlyphLevel = glyphLevel + attempts - 1 + extraUpgrade;
+            lastFinalGlyphLevel = finalGlyphLevel;
+            const requiredPit = calcPlus20.checked ? glyphLevel + 20 : finalGlyphLevel + 10;
+
+            output.innerHTML = `<strong>Minimum Pit level: ${requiredPit}</strong><br><strong>Glyph level after run: ${finalGlyphLevel}</strong>`;
+        }
+
+        function adjustGlyphLevel(delta) {
+            let current = parseInt(glyphInput.value) || 1;
+            current = Math.max(1, current + delta);
+            glyphInput.value = current;
+            updateResults();
+        }
+
+        function resetGlyphLevel() {
+            glyphInput.value = 1;
+            updateResults();
+        }
+
+        applyFinalLevel.addEventListener('click', () => {
+            glyphInput.value = lastFinalGlyphLevel;
+            updateResults();
+        });
+
+        function updateStoneCost() {
+            let from = parseInt(currentLevel.value);
+            let to = parseInt(desiredLevel.value);
+            let stones = 0;
+            let runs = 0;
+            const upgradesPerRun = stoneNoDeath.checked ? 4 : 3;
+
+            if (isNaN(from) || isNaN(to) || from < 1 || to <= from) {
+                stoneOutput.innerText = 'Please enter valid levels (desired must be higher than current).';
+                return;
+            }
+
+            let level = from;
+            while (level < to) {
+                const gain = pitPlus20.checked ? upgradesPerRun + 1 : upgradesPerRun;
+                level += gain;
+                stones += 3;
+                runs += 1;
+            }
+
+            stoneOutput.innerHTML = `<strong>Minimum runs: ${runs}</strong><br><strong>Artificer's Stones needed: ${stones}</strong><br>`;
+        }
+
+        function setRange(from, to) {
+            currentLevel.value = from;
+            desiredLevel.value = to;
+            updateStoneCost();
+        }
+
+        glyphInput.addEventListener('input', updateResults);
+        noDeathBonus.addEventListener('change', updateResults);
+        calcPlus20.addEventListener('change', updateResults);
+
+        currentLevel.addEventListener('input', updateStoneCost);
+        desiredLevel.addEventListener('input', updateStoneCost);
+        stoneNoDeath.addEventListener('change', updateStoneCost);
+        pitPlus20.addEventListener('change', updateStoneCost);
+
+        updateResults();
+        updateStoneCost();
+    </script>
+</body>
+</html>
